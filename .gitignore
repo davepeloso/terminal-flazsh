@@ -21,3 +21,12 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+/public/123-main-street
+/public/123-main-street/*
+/storage/flambient
+/storage/flambient/*
+/storage/flambient/*/scripts
+/storage/flambient/*/scripts/*
+/storage/flambient/*/flambient/*
+.DS_Store
+.DS_Store*
