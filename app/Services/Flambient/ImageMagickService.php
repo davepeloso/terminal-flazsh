@@ -232,7 +232,8 @@ class ImageMagickService
             ];
         }
 
-        $result = Process::run("bash \"{$masterScript}\"");
+        // Set timeout to 30 minutes (1800 seconds) for large image sets
+        $result = Process::timeout(1800)->run("bash \"{$masterScript}\"");
 
         return [
             'success' => $result->successful(),
