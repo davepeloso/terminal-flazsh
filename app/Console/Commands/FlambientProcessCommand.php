@@ -196,11 +196,11 @@ class FlambientProcessCommand extends Command
         // Show configuration summary
         $this->newLine();
         note("Configuration summary:\n" .
-             "  Project: {$projectName}\n" .
-             "  Images: {$imageDirectory}\n" .
-             "  Output: {$outputDirectory}\n" .
-             "  Mode: " . ($processOnly ? 'Local only' : 'Full (with cloud)') . "\n" .
-             "  Blending: {$levelLow}/{$levelHigh}/γ{$gamma}"
+            "  Project: {$projectName}\n" .
+            "  Images: {$imageDirectory}\n" .
+            "  Output: {$outputDirectory}\n" .
+            "  Mode: " . ($processOnly ? 'Local only' : 'Full (with cloud)') . "\n" .
+            "  Blending: {$levelLow}/{$levelHigh}/γ{$gamma}"
         );
 
         if (!confirm('Start processing?', default: true)) {
@@ -354,8 +354,8 @@ class FlambientProcessCommand extends Command
                 }
 
                 note("✓ Processing complete!\n" .
-                     "  Output: {$config->outputDirectory}/flambient/\n" .
-                     "  Images: {$processResult->data['blended_count']}"
+                    "  Output: {$config->outputDirectory}/flambient/\n" .
+                    "  Images: {$processResult->data['blended_count']}"
                 );
 
                 $run->update([
