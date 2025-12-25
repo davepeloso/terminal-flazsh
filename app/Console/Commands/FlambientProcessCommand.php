@@ -249,6 +249,7 @@ class FlambientProcessCommand extends Command
                 levelHigh: $config->levelHigh,
                 gamma: $config->gamma,
                 outputPrefix: $config->outputPrefix,
+                enableDarkenExport: false, // Disable _tmp files
             );
 
             $startTime = microtime(true);
@@ -286,6 +287,15 @@ class FlambientProcessCommand extends Command
             // Cloud steps (skip if local-only)
             if ($processOnly) {
                 info('Step 4-6: Skipped (local-only mode)');
+
+                // Clean up any _tmp files (darkened exports)
+                $tmpFiles = glob("{$config->outputDirectory}/flambient/*_tmp.jpg");
+                if (!empty($tmpFiles)) {
+                    foreach ($tmpFiles as $tmpFile) {
+                        @unlink($tmpFile);
+                    }
+                    note("✓ Cleaned up " . count($tmpFiles) . " temporary files");
+                }
 
                 note("✓ Processing complete!\n" .
                      "  Output: {$config->outputDirectory}/flambient/\n" .
