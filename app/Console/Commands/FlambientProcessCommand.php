@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\DataObjects\ProcessingResult;
 use App\DataObjects\WorkflowConfig;
+use App\Enums\ImageClassificationStrategy;
 use App\Enums\WorkflowStatus;
 use App\Models\WorkflowRun;
 use App\Services\Flambient\ExifService;
@@ -79,6 +80,58 @@ class FlambientProcessCommand extends Command
             default: 'full',
             hint: 'Cloud processing requires API key and costs money'
         ) === 'local');
+
+        // ═══════════════════════════════════════════════════════
+        // 1.5. IMAGE CLASSIFICATION STRATEGY
+        // ═══════════════════════════════════════════════════════
+
+        $this->newLine();
+        info('Image Classification Setup');
+        note('Choose which EXIF field to use for distinguishing Ambient vs Flash images');
+
+        // Show sample EXIF values to help user decide
+        if (confirm('Show sample EXIF values from your images?', default: true)) {
+            $tempExif = new ExifService();
+            $samples = $tempExif->getSampleExifValues($imageDirectory, 3);
+
+            $this->newLine();
+            $this->table(
+                ['Filename', 'Flash#', 'ExpProgram', 'ExpMode', 'WB', 'ISO', 'Shutter'],
+                array_map(fn($s) => [
+                    $s['filename'],
+                    $s['flash'],
+                    $s['exposure_program'],
+                    $s['exposure_mode'],
+                    $s['white_balance'],
+                    $s['iso'],
+                    $s['shutter_speed'],
+                ], $samples)
+            );
+            $this->newLine();
+        }
+
+        $strategy = ImageClassificationStrategy::from(select(
+            label: 'Which EXIF field should identify Ambient images?',
+            options: [
+                'flash' => 'Flash# (Flash = 16 for Ambient)',
+                'exposure_program' => 'Exposure Program',
+                'exposure_mode' => 'Exposure Mode',
+                'white_balance' => 'White Balance',
+                'iso' => 'ISO Value',
+                'shutter_speed' => 'Shutter Speed',
+            ],
+            default: 'flash',
+            hint: 'Choose the field that differs between your ambient and flash shots'
+        ));
+
+        $ambientValue = text(
+            label: "What {$strategy->label()} value indicates an AMBIENT image?",
+            default: (string)$strategy->commonAmbientValue(),
+            required: true,
+            hint: 'Images with this exact value will be classified as Ambient'
+        );
+
+        note("Classification: {$strategy->label()} = '{$ambientValue}' → Ambient, others → Flash");
 
         // ═══════════════════════════════════════════════════════
         // 2. CONFIGURATION
@@ -207,7 +260,10 @@ class FlambientProcessCommand extends Command
             // Step 2: Analyze
             info('Step 2/7: Analyzing images');
 
-            $exifService = new ExifService();
+            $exifService = new ExifService(
+                strategy: $strategy,
+                ambientValue: $ambientValue
+            );
             $analyzeResult = spin(
                 callback: function() use ($exifService, $config) {
                     // Extract EXIF metadata
