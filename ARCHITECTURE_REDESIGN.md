@@ -4,7 +4,23 @@
 
 This document presents a complete architectural redesign of the flambient photography processing workflow, transitioning from fragile shell scripts to a robust Laravel-native CLI application with explicit state management, comprehensive error handling, and superior user experience through Laravel Prompts.
 
----
+## Installation and Setup
+
+```bash
+# 1. Install dependencies (if needed)
+composer install
+
+# 2. Set up database
+touch database/database.sqlite
+php artisan migrate
+
+# 3. Run the command (MVP simulation)
+php artisan flambient:process --local
+
+# 4. Explore the database
+php artisan tinker
+>>> WorkflowRun::with(['steps', 'files'])->get()
+>>> WorkflowRun::first()->toArray()
 
 ## Part 1: Critical Workflow Review
 
