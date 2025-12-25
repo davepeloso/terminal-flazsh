@@ -6,6 +6,8 @@ use App\DataObjects\ProcessingResult;
 use App\DataObjects\WorkflowConfig;
 use App\Enums\WorkflowStatus;
 use App\Models\WorkflowRun;
+use App\Services\Flambient\ExifService;
+use App\Services\Flambient\ImageMagickService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
 
@@ -204,13 +206,25 @@ class FlambientProcessCommand extends Command
 
             // Step 2: Analyze
             info('Step 2/7: Analyzing images');
+
+            $exifService = new ExifService();
             $analyzeResult = spin(
-                callback: function() use ($run, $config) {
-                    sleep(2); // Simulate EXIF extraction
+                callback: function() use ($exifService, $config) {
+                    // Extract EXIF metadata
+                    $metadata = $exifService->extractMetadata($config->imageDirectory);
+
+                    // Group images by consecutive ambient/flash sequences
+                    $groups = $exifService->groupImages($metadata);
+
+                    // Get statistics
+                    $stats = $exifService->getGroupStatistics($groups);
+
                     return new ProcessingResult(true, 'EXIF extracted', [
-                        'ambient_count' => 15,
-                        'flash_count' => 10,
-                        'group_count' => 5,
+                        'metadata' => $metadata,
+                        'groups' => $groups,
+                        'ambient_count' => $stats['total_ambient'],
+                        'flash_count' => $stats['total_flash'],
+                        'group_count' => $stats['total_groups'],
                     ]);
                 },
                 message: 'Extracting EXIF metadata and grouping images...'
@@ -230,18 +244,43 @@ class FlambientProcessCommand extends Command
             info('Step 3/7: Processing images with ImageMagick');
             note('This may take several minutes for large groups');
 
-            $processResult = spin(
-                callback: function() use ($run) {
-                    sleep(3); // Simulate ImageMagick processing
-                    return new ProcessingResult(true, 'Blended', [
-                        'blended_count' => 5,
-                        'duration_seconds' => 45,
-                    ]);
-                },
-                message: 'Blending groups...'
+            $imageMagickService = new ImageMagickService(
+                levelLow: $config->levelLow,
+                levelHigh: $config->levelHigh,
+                gamma: $config->gamma,
+                outputPrefix: $config->outputPrefix,
             );
 
-            note("✓ Created {$processResult->data['blended_count']} blended images in {$processResult->data['duration_seconds']}s");
+            $startTime = microtime(true);
+
+            $processResult = spin(
+                callback: function() use ($imageMagickService, $config, $analyzeResult) {
+                    // Generate .mgk scripts for all groups
+                    $scripts = $imageMagickService->generateScripts(
+                        groups: $analyzeResult->data['groups'],
+                        imageDirectory: $config->imageDirectory,
+                        scriptsDirectory: "{$config->outputDirectory}/scripts",
+                        flambientDirectory: "{$config->outputDirectory}/flambient"
+                    );
+
+                    // Execute all scripts via master script
+                    $result = $imageMagickService->executeAllScripts("{$config->outputDirectory}/scripts");
+
+                    if (!$result['success']) {
+                        throw new \RuntimeException("ImageMagick execution failed: " . ($result['error'] ?? 'Unknown error'));
+                    }
+
+                    return new ProcessingResult(true, 'Blended', [
+                        'scripts_generated' => count($scripts),
+                        'blended_count' => $analyzeResult->data['group_count'],
+                        'output' => $result['output'],
+                    ]);
+                },
+                message: 'Generating and executing ImageMagick scripts...'
+            );
+
+            $duration = round(microtime(true) - $startTime, 2);
+            note("✓ Created {$processResult->data['blended_count']} blended images in {$duration}s");
             $this->newLine();
 
             // Cloud steps (skip if local-only)
