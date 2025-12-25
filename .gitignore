@@ -21,6 +21,7 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+<<<<<<< HEAD
 /public/123-main-street
 /public/123-main-street/*
 /storage/flambient
@@ -30,3 +31,11 @@ yarn-error.log
 /storage/flambient/*/flambient/*
 .DS_Store
 .DS_Store*
+=======
+*.jpg
+*.JPG
+*.jpeg
+*.JPEG
+.DS_Store
+
+>>>>>>> 8be6d1d (Add common media and system files to .gitignore)
