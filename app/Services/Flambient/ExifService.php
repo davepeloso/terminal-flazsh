@@ -2,12 +2,19 @@
 
 namespace App\Services\Flambient;
 
+use App\Enums\ImageClassificationStrategy;
 use App\Enums\ImageType;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Process;
 
 class ExifService
 {
+    public function __construct(
+        private ImageClassificationStrategy $strategy = ImageClassificationStrategy::Flash,
+        private mixed $ambientValue = 16,
+        private ?string $customField = null,
+    ) {}
+
     /**
      * Extract EXIF metadata from all JPG images in a directory.
      */
@@ -15,7 +22,9 @@ class ExifService
     {
         $result = Process::run(
             "exiftool -q -csv -ext jpg -ext JPG " .
-            "-Filename -DateTimeOriginal -MeteringMode -ShutterSpeed -ApertureValue -ISO -Flash# -WhiteBalance " .
+            "-Filename -DateTimeOriginal -MeteringMode -ShutterSpeed -ApertureValue " .
+            "-ISO -Flash# -WhiteBalance -ExposureProgram -ExposureMode -FNumber " .
+            ($this->customField ? "-{$this->customField} " : "") .
             "\"{$directory}\""
         );
 
@@ -54,10 +63,14 @@ class ExifService
                 'metering_mode' => $row['MeteringMode'] ?? '',
                 'shutter_speed' => $row['ShutterSpeed'] ?? '',
                 'aperture' => $row['ApertureValue'] ?? '',
+                'f_number' => $row['FNumber'] ?? '',
                 'iso' => $row['ISO'] ?? '',
-                'flash' => (int)($row['Flash#'] ?? 16),
+                'flash' => $row['Flash#'] ?? '',
                 'white_balance' => $row['WhiteBalance'] ?? '',
-                'type' => $this->classifyImageType((int)($row['Flash#'] ?? 16)),
+                'exposure_program' => $row['ExposureProgram'] ?? '',
+                'exposure_mode' => $row['ExposureMode'] ?? '',
+                'custom_field' => $this->customField ? ($row[$this->customField] ?? '') : '',
+                'type' => $this->classifyImageType($row),
             ];
         }
 
@@ -70,11 +83,23 @@ class ExifService
     }
 
     /**
-     * Classify image type based on Flash# EXIF field.
+     * Classify image type based on selected strategy.
      */
-    private function classifyImageType(int $flashValue): ImageType
+    private function classifyImageType(array $exifData): ImageType
     {
-        return ImageType::fromFlashField($flashValue);
+        $fieldValue = match($this->strategy) {
+            ImageClassificationStrategy::Flash => (int)($exifData['Flash#'] ?? 16),
+            ImageClassificationStrategy::ExposureProgram => (int)($exifData['ExposureProgram'] ?? 0),
+            ImageClassificationStrategy::ExposureMode => (int)($exifData['ExposureMode'] ?? 0),
+            ImageClassificationStrategy::WhiteBalance => (int)($exifData['WhiteBalance'] ?? 0),
+            ImageClassificationStrategy::ISO => (int)($exifData['ISO'] ?? 0),
+            ImageClassificationStrategy::ShutterSpeed => $exifData['ShutterSpeed'] ?? '',
+            ImageClassificationStrategy::Custom => $this->customField ? ($exifData[$this->customField] ?? '') : '',
+        };
+
+        // Compare field value with ambient value
+        // If they match, it's ambient; otherwise it's flash
+        return $fieldValue == $this->ambientValue ? ImageType::Ambient : ImageType::Flash;
     }
 
     /**
@@ -149,5 +174,24 @@ class ExifService
         }
 
         return $stats;
+    }
+
+    /**
+     * Display sample EXIF values to help user choose classification strategy.
+     */
+    public function getSampleExifValues(string $directory, int $sampleSize = 5): array
+    {
+        $metadata = $this->extractMetadata($directory);
+        $sample = $metadata->take($sampleSize);
+
+        return $sample->map(fn($img) => [
+            'filename' => $img['filename'],
+            'flash' => $img['flash'],
+            'exposure_program' => $img['exposure_program'],
+            'exposure_mode' => $img['exposure_mode'],
+            'white_balance' => $img['white_balance'],
+            'iso' => $img['iso'],
+            'shutter_speed' => $img['shutter_speed'],
+        ])->toArray();
     }
 }
