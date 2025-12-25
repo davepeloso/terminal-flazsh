@@ -1,0 +1,18 @@
+# ImageMagick script for Group 06
+# Ambient files: clean-edge-0017.jpg
+# Flash files:   clean-edge-0018.jpg, clean-edge-0019.jpg
+
+"public/123-main-street/clean-edge-0017.jpg" -write mpr:ambient_merge +delete
+"public/123-main-street/clean-edge-0018.jpg" "public/123-main-street/clean-edge-0019.jpg" -compose lighten -composite -write mpr:flash_merge +delete
+
+# --- Dark Export: Create darkened flash composite ---
+"public/123-main-street/clean-edge-0018.jpg" "public/123-main-street/clean-edge-0019.jpg" -compose darken -composite -write "/Users/davepeloso/Projects/terminal-flazsh/storage/flambient/6546/flambient/flambient_06_tmp.jpg" +delete
+# Darkened flash composite saved to: /Users/davepeloso/Projects/terminal-flazsh/storage/flambient/6546/flambient/flambient_06_tmp.jpg
+
+# --- Flambient Blending Steps ---
+mpr:ambient_merge -channel B -level 40%,140%,1.0 +channel -write mpr:ambient_mask_alpha +delete
+mpr:flash_merge mpr:ambient_mask_alpha -compose CopyOpacity -composite -write mpr:flash_mask +delete
+mpr:flash_merge mpr:ambient_merge -compose Luminize -composite -write mpr:luminize_flambient +delete
+mpr:luminize_flambient mpr:flash_mask -compose Over -composite -write mpr:ungraded_flambient +delete
+mpr:ungraded_flambient mpr:flash_merge -compose Colorize -composite -write "/Users/davepeloso/Projects/terminal-flazsh/storage/flambient/6546/flambient/flambient_06.jpg"
+# Final output path: /Users/davepeloso/Projects/terminal-flazsh/storage/flambient/6546/flambient/flambient_06.jpg
