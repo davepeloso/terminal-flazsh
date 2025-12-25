@@ -1,0 +1,51 @@
+{
+  "projects": [
+    {
+      "name": "20250409_project",
+      "created_at": "2025-04-09T16:00:25.3NZ",
+      "image_directory": "/Users/davepeloso/Desktop/xxx",
+      "steps": [
+        {
+          "name": "Image Processing with ImageMagick",
+          "status": "success",
+          "output": "Q2hlY2tpbmcgZGVwZW5kZW5jaWVzLi4uCiAgRm91bmQ6IC91c3IvbG9jYWwvYmluL2V4aWZ0b29sCiAgRm91bmQ6IC9vcHQvaG9tZWJyZXcvYmluLy9tYWdpY2sKICBGb3VuZDogL3Vzci9iaW4vYXdrCiAgRm91bmQ6IC91c3IvYmluL3NvcnQKICBGb3VuZDogL3Vzci9iaW4vc2VkCiAgRm91bmQ6IC9iaW4vbWtkaXIKICBGb3VuZDogL2Jpbi9tdgogIEZvdW5kOiAvdXNyL2Jpbi9jdXQKICBGb3VuZDogL3Vzci9iaW4vdHIKICBGb3VuZDogL0FwcGxpY2F0aW9ucy9YQU1QUC94YW1wcGZpbGVzL2Jpbi9oZWFkCiAgRm91bmQ6IC91c3IvYmluL3RhaWwKQWxsIGRlcGVuZGVuY2llcyBmb3VuZC4KQ29uZmlndXJhdGlvbjoKICBJbWFnZSBwYXRoOiAgICAgICAgICAvVXNlcnMvZGF2ZXBlbG9zby9EZXNrdG9wL3h4eAogIExldmVsIGxvdzogICAgICAgICAgIDQwJQogIExldmVsIGhpZ2g6ICAgICAgICAgIDE0MCUKICBHYW1tYTogICAgICAgICAgICAgICAxLjAKICBPdXRwdXQgbmFtZSBwcmVmaXg6ICAnZmxhbWJpZW50JyAoVXNpbmcgUHJlZml4IE5hbWluZykKICBFbmFibGUgZGFya2VuIGV4cG9ydDogdHJ1ZQogIERhcmtlbiBzdWZmaXg6ICAgICAgICdfdG1wJwpQcm9jZXNzaW5nIGltYWdlcyBmcm9tOiAvVXNlcnMvZGF2ZXBlbG9zby9EZXNrdG9wL3h4eApDcmVhdGluZyBvdXRwdXQgZGlyZWN0b3JpZXMuLi4KICBNZXRhZGF0YSBkaXJlY3Rvcnk6IC9Vc2Vycy9kYXZlcGVsb3NvL0Rlc2t0b3AveHh4L21ldGFkYXRhCiAgU2NyaXB0cyBkaXJlY3Rvcnk6IC9Vc2Vycy9kYXZlcGVsb3NvL0Rlc2t0b3AveHh4L3NjcmlwdHMKICBGbGFtYmllbnQgb3V0cHV0IGRpcmVjdG9yeTogL1VzZXJzL2RhdmVwZWxvc28vRGVza3RvcC94eHgvZmxhbWJpZW50CiAgVGVtcG9yYXJ5IGRhcmtlbiBkaXJlY3Rvcnk6IC9Vc2Vycy9kYXZlcGVsb3NvL0Rlc2t0b3AveHh4L3RlbXAKICBPcmlnaW5hbCBleHBvc3VyZSBkaXJlY3Rvcnk6IC9Vc2Vycy9kYXZlcGVsb3NvL0Rlc2t0b3AveHh4L2V4cG9zdXJlcwpVc2luZyBhZGp1c3RtZW50IHZhbHVlczogTGV2ZWwgTG93PTQwJSwgTGV2ZWwgSGlnaD0xNDAlLCBHYW1tYT0xLjAKT3V0cHV0IG5hbWluZyBtb2RlOiBQcmVmaXggJ2ZsYW1iaWVudCcKRGFya2VuIGV4cG9ydDogRW5hYmxlZApEYXJrZW4gc3VmZml4OiAnX3RtcCcKRXh0cmFjdGluZyBtZXRhZGF0YSBmcm9tIEpQRyBpbWFnZXMgaW4gJy9Vc2Vycy9kYXZlcGVsb3NvL0Rlc2t0b3AveHh4Jy4uLgpGb3VuZCAgICAgICAgMCBKUEcgZmlsZXMgdG8gcHJvY2Vzcy4KV2FybmluZzogTm8gaW1hZ2UgbWV0YWRhdGEgZm91bmQuClJhdyBtZXRhZGF0YSBleHRyYWN0ZWQuClNvcnRpbmcgbWV0YWRhdGEgYnkgRGF0ZVRpbWVPcmlnaW5hbC4uLgpNZXRhZGF0YSBzb3J0ZWQuCkFkZGluZyBUeXBlIGFuZCBHcm91cCBjb2x1bW5zLi4uCkZpbmFsIG1ldGFkYXRhIHNhdmVkIHRvICcvVXNlcnMvZGF2ZXBlbG9zby9EZXNrdG9wL3h4eC9tZXRhZGF0YS9tZXRhZGF0YV9maW5hbC5jc3YnCkNsZWFuZWQgdXAgaW50ZXJtZWRpYXRlIGZpbGVzLgpHZW5lcmF0aW5nIEltYWdlTWFnaWNrIHNjcmlwdHMgZnJvbSAnL1VzZXJzL2RhdmVwZWxvc28vRGVza3RvcC94eHgvbWV0YWRhdGEvbWV0YWRhdGFfZmluYWwuY3N2Jy4uLgpTdGFydGluZyBBV0sgc2NyaXB0IGdlbmVyYXRpb24uLi4KRmluaXNoZWQgcHJvY2Vzc2luZyBDU1YuIE1heCBncm91cCBmb3VuZDogMApXYXJuaW5nOiBObyBncm91cHMgZm91bmQgdG8gZ2VuZXJhdGUgc2NyaXB0cyBmb3IuCkltYWdlTWFnaWNrIHNjcmlwdCBnZW5lcmF0aW9uIGNvbXBsZXRlZC4KT3V0cHV0IGltYWdlcyB3aWxsIHBvdGVudGlhbGx5IGJlIHNhdmVkIHRvICcvVXNlcnMvZGF2ZXBlbG9zby9EZXNrdG9wL3h4eC9mbGFtYmllbnQnIHVwb24gZXhlY3V0aW9uLgpUbyBydW4gYWxsIHNjcmlwdHMsIGV4ZWN1dGU6ICIvVXNlcnMvZGF2ZXBlbG9zby9EZXNrdG9wL3h4eC9zY3JpcHRzL3J1bl9hbGxfc2NyaXB0cy5zaCIKLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQpFeGVjdXRpbmc6IC9Vc2Vycy9kYXZlcGVsb3NvL0Rlc2t0b3AveHh4L3NjcmlwdHMvcnVuX2FsbF9zY3JpcHRzLnNoCi0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KU3RhcnRpbmcgRmxhbWJpZW50IHByb2Nlc3NpbmcgZm9yIGFsbCBncm91cHMuLi4KLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQpQcm9jZXNzaW5nIEdyb3VwIDAxICgvVXNlcnMvZGF2ZXBlbG9zby9EZXNrdG9wL3h4eC9zY3JpcHRzL2dyb3VwXzAxX3NjcmlwdC5tZ2spLi4uCm1hZ2ljazogdW5hYmxlIHRvIG9wZW4gaW1hZ2UgJy9Vc2Vycy9kYXZlcGVsb3NvL0Rlc2t0b3AveHh4L0FNQl81ODg5LmpwZyc6IE5vIHN1Y2ggZmlsZSBvciBkaXJlY3RvcnkgQCBlcnJvci9ibG9iLmMvT3BlbkJsb2IvMzU5Ni4KRXJyb3IgcHJvY2Vzc2luZyBHcm91cCAwMS4gRXhpdCBzdGF0dXM6IDEKLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQpGbGFtYmllbnQgcHJvY2Vzc2luZyBjb21wbGV0ZS4KU3VtbWFyeTogMCBncm91cHMgc3VjY2VlZGVkLCAxIGdyb3VwcyBmYWlsZWQuCk91dHB1dCBpbWFnZXMgc2F2ZWQgdG86IC9Vc2Vycy9kYXZlcGVsb3NvL0Rlc2t0b3AveHh4L2ZsYW1iaWVudAotLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCk1hc3RlciBzY3JpcHQgT0suCi0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KTW92aW5nIG9yaWdpbmFsIGV4cG9zdXJlcyB0bzogL1VzZXJzL2RhdmVwZWxvc28vRGVza3RvcC94eHgvZXhwb3N1cmVzCkZpbmlzaGVkIG1vdmluZyBleHBvc3VyZXMuIE1vdmVkOiAwLCBTa2lwcGVkOiAwLCBFcnJvcnM6IDAKTW92aW5nIGRhcmtlbmVkIHRlbXBvcmFyeSBmaWxlcyB0bzogL1VzZXJzL2RhdmVwZWxvc28vRGVza3RvcC94eHgvdGVtcApGaW5pc2hlZCBtb3ZpbmcgZGFya2VuZWQgZmlsZXMuIE1vdmVkOiAwLCBTa2lwcGVkOiAwLCBFcnJvcnM6IDAKClNjcmlwdCBmaW5pc2hlZCBzdWNjZXNzZnVsbHku",
+          "output_is_base64": "true",
+          "timestamp": "2025-04-09T16:00:25.3NZ",
+          "duration": "0"
+        },
+        {
+          "name": "Upload to Imagen AI",
+          "status": "success",
+          "output": "Rm91bmQgICAgICAgIDUgSlBHIGZpbGVzIGluIC9Vc2Vycy9kYXZlcGVsb3NvL0Rlc2t0b3AveHh4CkNyZWF0aW5nIG5ldyBJbWFnZW5BSSBwcm9qZWN0Li4uCkNyZWF0ZWQgcHJvamVjdCB3aXRoIFVVSUQ6IDY3ZjY5OTlhZWNkNjBiMjdjYmNmZDA0MgpQcm9qZWN0IFVSTDogaHR0cHM6Ly9hcHAuaW1hZ2VuLWFpLmNvbS9wcm9qZWN0cy82N2Y2OTk5YWVjZDYwYjI3Y2JjZmQwNDIKUHJlcGFyaW5nIGZpbGUgbGlzdCBmb3IgdXBsb2FkLi4uClJlcXVlc3RpbmcgdGVtcG9yYXJ5IHVwbG9hZCBsaW5rcy4uLgpQcm9jZXNzaW5nIHVwbG9hZCBsaW5rcy4uLgpVcGxvYWRpbmc6IEFNQl81ODg5LmpwZwpjdXJsOiBDYW4ndCBvcGVuICcvVXNlcnMvZGF2ZXBlbG9zby9EZXNrdG9wL3h4eC9BTUJfNTg4OS5qcGcnIQpjdXJsOiB0cnkgJ2N1cmwgLS1oZWxwJyBvciAnY3VybCAtLW1hbnVhbCcgZm9yIG1vcmUgaW5mb3JtYXRpb24K4pyTIFVwbG9hZGVkOiBBTUJfNTg4OS5qcGcKVXBsb2FkaW5nOiBGTFNfNTg5MS5qcGcKY3VybDogQ2FuJ3Qgb3BlbiAnL1VzZXJzL2RhdmVwZWxvc28vRGVza3RvcC94eHgvRkxTXzU4OTEuanBnJyEKY3VybDogdHJ5ICdjdXJsIC0taGVscCcgb3IgJ2N1cmwgLS1tYW51YWwnIGZvciBtb3JlIGluZm9ybWF0aW9uCuKckyBVcGxvYWRlZDogRkxTXzU4OTEuanBnClVwbG9hZGluZzogRkxTXzU4OTIuanBnCmN1cmw6IENhbid0IG9wZW4gJy9Vc2Vycy9kYXZlcGVsb3NvL0Rlc2t0b3AveHh4L0ZMU181ODkyLmpwZychCmN1cmw6IHRyeSAnY3VybCAtLWhlbHAnIG9yICdjdXJsIC0tbWFudWFsJyBmb3IgbW9yZSBpbmZvcm1hdGlvbgrinJMgVXBsb2FkZWQ6IEZMU181ODkyLmpwZwpVcGxvYWRpbmc6IGZsYW1iaWVudF8wMS5qcGcKY3VybDogQ2FuJ3Qgb3BlbiAnL1VzZXJzL2RhdmVwZWxvc28vRGVza3RvcC94eHgvZmxhbWJpZW50XzAxLmpwZychCmN1cmw6IHRyeSAnY3VybCAtLWhlbHAnIG9yICdjdXJsIC0tbWFudWFsJyBmb3IgbW9yZSBpbmZvcm1hdGlvbgrinJMgVXBsb2FkZWQ6IGZsYW1iaWVudF8wMS5qcGcKVXBsb2FkaW5nOiBmbGFtYmllbnRfMDFfdG1wLmpwZwpjdXJsOiBDYW4ndCBvcGVuICcvVXNlcnMvZGF2ZXBlbG9zby9EZXNrdG9wL3h4eC9mbGFtYmllbnRfMDFfdG1wLmpwZychCmN1cmw6IHRyeSAnY3VybCAtLWhlbHAnIG9yICdjdXJsIC0tbWFudWFsJyBmb3IgbW9yZSBpbmZvcm1hdGlvbgrinJMgVXBsb2FkZWQ6IGZsYW1iaWVudF8wMV90bXAuanBnClNlbmRpbmcgcHJvamVjdCBmb3IgZWRpdGluZyB3aXRoIHByb2ZpbGUga2V5OiAzMDk0MDYKClByb2plY3Qgc3VibWl0dGVkIGZvciBlZGl0aW5nLgpDaGVjayBzdGF0dXMgd2l0aDogY3VybCAtSCAieC1hcGkta2V5OiBENDlOUHducG1JeVl1Z0JWc0ZjUkpBeFI5b3BBUmJ6MlFTeUNUY0JISVRRIiBodHRwczovL2FwaS1iZXRhLmltYWdlbi1haS5jb20vdjEvcHJvamVjdHMvNjdmNjk5OWFlY2Q2MGIyN2NiY2ZkMDQyL2VkaXQvc3RhdHVzCgpQcm9qZWN0IFVSTCAobWlnaHQgdGFrZSBhIGZldyBtaW51dGVzIHRvIGJlIGFjY2Vzc2libGUpOgpodHRwczovL2FwcC5pbWFnZW4tYWkuY29tL3Byb2plY3RzLzY3ZjY5OTlhZWNkNjBiMjdjYmNmZDA0Mg==",
+          "output_is_base64": "true",
+          "timestamp": "2025-04-09T16:00:27.3NZ",
+          "duration": "2"
+        },
+        {
+          "name": "Check Imagen AI Status",
+          "status": "skipped",
+          "output": "Q291bGQgbm90IGZpbmQgUFJPSkVDVF9VVUlEIGZyb20gcHJldmlvdXMgc3RlcHM=",
+          "output_is_base64": "true",
+          "timestamp": "2025-04-09T16:00:27.3NZ",
+          "duration": "0"
+        },
+        {
+          "name": "Download Results",
+          "status": "skipped",
+          "output": "Q291bGQgbm90IGZpbmQgUFJPSkVDVF9VVUlEIGZyb20gcHJldmlvdXMgc3RlcHM=",
+          "output_is_base64": "true",
+          "timestamp": "2025-04-09T16:00:27.3NZ",
+          "duration": "0"
+        },
+        {
+          "name": "Backup XMP Metadata",
+          "status": "success",
+          "output": "U2V0dGluZ3M6Ci0gQUNUSU9OOiBiYWNrdXAKLSBUQVJHRVRfUEFUSDogL1VzZXJzL2RhdmVwZWxvc28vRGVza3RvcC94eHgvCi0gSVNfRElSOiAxCi0gSVNfRklMRTogMAotIERSWV9SVU46IDAgKFdpbGwgbW9kaWZ5IGZpbGVzKQoKUHJvY2Vzc2luZyBkaXJlY3Rvcnk6IC9Vc2Vycy9kYXZlcGVsb3NvL0Rlc2t0b3AveHh4LwpEaXJlY3RvcnkgcHJvY2Vzc2luZyBjb21wbGV0ZS4KClNjcmlwdCBmaW5pc2hlZC4=",
+          "output_is_base64": "true",
+          "timestamp": "2025-04-09T16:00:27.3NZ",
+          "duration": "0"
+        }
+      ]
+    }
+  ]
+}
