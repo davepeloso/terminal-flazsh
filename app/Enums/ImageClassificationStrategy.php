@@ -18,13 +18,29 @@ enum ImageClassificationStrategy: string
     public function label(): string
     {
         return match($this) {
-            self::Flash => 'Flash Field (Flash# = 16 for Ambient)',
+            self::Flash => 'Flash',
             self::ExposureProgram => 'Exposure Program',
             self::ExposureMode => 'Exposure Mode',
             self::WhiteBalance => 'White Balance',
-            self::ISO => 'ISO Value',
+            self::ISO => 'ISO',
             self::ShutterSpeed => 'Shutter Speed',
             self::Custom => 'Custom Field',
+        };
+    }
+
+    /**
+     * Get help text showing common values.
+     */
+    public function helpText(): string
+    {
+        return match($this) {
+            self::Flash => '16=No Flash, 0=Flash Fired',
+            self::ExposureProgram => '0=Not Defined, 1=Manual, 2=Program AE, 3=Aperture-priority',
+            self::ExposureMode => '0=Auto, 1=Manual, 2=Auto Bracket',
+            self::WhiteBalance => '0=Auto, 1=Manual',
+            self::ISO => 'e.g., 100, 125, 400, 640, 1000',
+            self::ShutterSpeed => 'e.g., 1/50, 1/100, 1/1000',
+            self::Custom => '',
         };
     }
 

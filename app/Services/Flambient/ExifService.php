@@ -21,9 +21,9 @@ class ExifService
     public function extractMetadata(string $directory): Collection
     {
         $result = Process::run(
-            "exiftool -q -csv -ext jpg -ext JPG " .
+            "exiftool -n -q -csv -ext jpg -ext JPG " .
             "-Filename -DateTimeOriginal -MeteringMode -ShutterSpeed -ApertureValue " .
-            "-ISO -Flash# -WhiteBalance -ExposureProgram -ExposureMode -FNumber " .
+            "-ISO -Flash -WhiteBalance -ExposureProgram -ExposureMode -FNumber " .
             ($this->customField ? "-{$this->customField} " : "") .
             "\"{$directory}\""
         );
@@ -64,11 +64,11 @@ class ExifService
                 'shutter_speed' => $row['ShutterSpeed'] ?? '',
                 'aperture' => $row['ApertureValue'] ?? '',
                 'f_number' => $row['FNumber'] ?? '',
-                'iso' => $row['ISO'] ?? '',
-                'flash' => $row['Flash#'] ?? '',
-                'white_balance' => $row['WhiteBalance'] ?? '',
-                'exposure_program' => $row['ExposureProgram'] ?? '',
-                'exposure_mode' => $row['ExposureMode'] ?? '',
+                'iso' => (int)($row['ISO'] ?? 0),
+                'flash' => (int)($row['Flash'] ?? 16),
+                'white_balance' => (int)($row['WhiteBalance'] ?? 0),
+                'exposure_program' => (int)($row['ExposureProgram'] ?? 0),
+                'exposure_mode' => (int)($row['ExposureMode'] ?? 0),
                 'custom_field' => $this->customField ? ($row[$this->customField] ?? '') : '',
                 'type' => $this->classifyImageType($row),
             ];
@@ -88,7 +88,7 @@ class ExifService
     private function classifyImageType(array $exifData): ImageType
     {
         $fieldValue = match($this->strategy) {
-            ImageClassificationStrategy::Flash => (int)($exifData['Flash#'] ?? 16),
+            ImageClassificationStrategy::Flash => (int)($exifData['Flash'] ?? 16),
             ImageClassificationStrategy::ExposureProgram => (int)($exifData['ExposureProgram'] ?? 0),
             ImageClassificationStrategy::ExposureMode => (int)($exifData['ExposureMode'] ?? 0),
             ImageClassificationStrategy::WhiteBalance => (int)($exifData['WhiteBalance'] ?? 0),
