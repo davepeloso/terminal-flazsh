@@ -30,12 +30,26 @@ yarn-error.log
 /storage/flambient/*/scripts/*
 /storage/flambient/*/flambient/*
 .DS_Store
-.DS_Store*
+<<<<<<< Updated upstream
+/**/*/*.DS_Store
+/*/*.DS_Store
+public/**/*.DS_Store
+*.DS_Store
+**/.DS_Store
 =======
-*.jpg
-*.JPG
+public/**/*.jpg
+/*.JPG
 *.jpeg
-*.JPEG
+/**/*.JPEG
 .DS_Store
 
+<<<<<<< HEAD
 >>>>>>> 8be6d1d (Add common media and system files to .gitignore)
+=======
+>>>>>>> 123-main
+=======
+.DS_Store*
+*.jpg
+/*.jpg
+>>>>>>> Stashed changes
+>>>>>>> d2ded14 (Auto stash before merge of "HEAD" and "123-main")
