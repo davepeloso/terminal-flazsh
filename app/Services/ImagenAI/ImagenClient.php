@@ -95,6 +95,8 @@ class ImagenClient
         return collect($profiles)->map(fn($profile) => new ImagenProfile(
             key: $profile['profile_key'],
             name: $profile['profile_name'],
+            profileType: $profile['profile_type'] ?? null,
+            imageType: $profile['image_type'] ?? null,
             photographyType: $profile['photography_type'] ?? null
         ));
     }

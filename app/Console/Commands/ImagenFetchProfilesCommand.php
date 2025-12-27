@@ -105,19 +105,26 @@ class ImagenFetchProfilesCommand extends Command
     }
 
     /**
-     * Format profile name from API response.
+     * Format profile name from API response with full details.
      */
     private function formatProfileName($profile): string
     {
-        $name = $profile->name;
+        $parts = [];
 
-        // Add profile type if available
-        if (isset($profile->photographyType) && $profile->photographyType) {
-            $type = ucwords(str_replace('_', ' ', strtolower($profile->photographyType)));
-            return "{$type} - {$name}";
+        // Start with the profile name
+        $parts[] = $profile->name;
+
+        // Add image type (RAW/JPEG info) if available
+        if (!empty($profile->imageType)) {
+            $parts[] = "[{$profile->imageType}]";
         }
 
-        return $name;
+        // Add profile type if available
+        if (!empty($profile->profileType)) {
+            $parts[] = "({$profile->profileType})";
+        }
+
+        return implode(' ', $parts);
     }
 
     /**

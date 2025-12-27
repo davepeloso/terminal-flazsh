@@ -24,6 +24,8 @@ readonly class ImagenProfile
     public function __construct(
         public string $key,
         public string $name,
+        public ?string $profileType = null,
+        public ?string $imageType = null,
         public ?string $photographyType = null,
     ) {}
 }

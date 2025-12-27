@@ -77,23 +77,32 @@ class FlambientProcessCommand extends Command
             hint: 'Directory containing your ambient and flash images'
         );
 
-        $processOnly = $this->option('local') ?: (select(
+        $workflowMode = $this->option('local') ? 'local' : (select(
             label: 'Processing mode',
             options: [
-                'full' => 'Full workflow (ImageMagick + Imagen AI cloud enhancement)',
-                'local' => 'Local only (ImageMagick blending without cloud upload)',
+                'full' => 'Full workflow (ImageMagick blending + Imagen AI enhancement)',
+                'upload' => 'Upload to Imagen AI only (skip blending, upload existing images)',
+                'local' => 'Local blending only (ImageMagick without cloud upload)',
             ],
             default: 'full',
             hint: 'Cloud processing requires API key and costs money'
-        ) === 'local');
+        ));
+
+        $processOnly = $workflowMode === 'local';
+        $uploadOnly = $workflowMode === 'upload';
 
         // ═══════════════════════════════════════════════════════
-        // 1.5. IMAGE CLASSIFICATION STRATEGY
+        // 1.5. IMAGE CLASSIFICATION STRATEGY (skip for upload-only)
         // ═══════════════════════════════════════════════════════
 
-        $this->newLine();
-        info('Image Classification Setup');
-        note('Choose which EXIF field to use for distinguishing Ambient vs Flash images');
+        if ($uploadOnly) {
+            // Skip classification setup for upload-only mode
+            $strategy = ImageClassificationStrategy::FLASH;
+            $ambientValue = '16';
+        } else {
+            $this->newLine();
+            info('Image Classification Setup');
+            note('Choose which EXIF field to use for distinguishing Ambient vs Flash images');
 
         // Show sample EXIF values to help user decide
         if (confirm('Show sample EXIF values from your images?', default: true)) {
@@ -152,7 +161,8 @@ class FlambientProcessCommand extends Command
             hint: $strategy->helpText()
         );
 
-        note("Classification: {$strategy->label()} = '{$ambientValue}' → Ambient, others → Flash");
+            note("Classification: {$strategy->label()} = '{$ambientValue}' → Ambient, others → Flash");
+        }
 
         // ═══════════════════════════════════════════════════════
         // 2. CONFIGURATION
@@ -160,6 +170,7 @@ class FlambientProcessCommand extends Command
 
         $apiKey = null;
         if (!$processOnly) {
+            // Upload-only and full mode both need API key
             $apiKey = config('flambient.imagen.api_key');
 
             if (!$apiKey) {
@@ -167,18 +178,19 @@ class FlambientProcessCommand extends Command
 
                 if (confirm('Switch to local-only mode?', default: true)) {
                     $processOnly = true;
+                    $uploadOnly = false;
                 } else {
                     return self::FAILURE;
                 }
             }
         }
 
-        // ImageMagick parameters
+        // ImageMagick parameters (skip for upload-only mode)
         $levelLow = '40%';
         $levelHigh = '140%';
         $gamma = '1.0';
 
-        if (confirm('Customize ImageMagick blending parameters?', default: false)) {
+        if (!$uploadOnly && confirm('Customize ImageMagick blending parameters?', default: false)) {
             $levelLow = text(
                 label: 'Level low (ambient mask threshold)',
                 default: '40%',
@@ -217,12 +229,14 @@ class FlambientProcessCommand extends Command
 
         // Show configuration summary
         $this->newLine();
+        $mode = $uploadOnly ? 'Upload to Imagen only' : ($processOnly ? 'Local blending only' : 'Full workflow');
+        $blendingInfo = $uploadOnly ? '' : "\n  Blending: {$levelLow}/{$levelHigh}/γ{$gamma}";
         note("Configuration summary:\n" .
              "  Project: {$projectName}\n" .
              "  Images: {$imageDirectory}\n" .
              "  Output: {$outputDirectory}\n" .
-             "  Mode: " . ($processOnly ? 'Local only' : 'Full (with cloud)') . "\n" .
-             "  Blending: {$levelLow}/{$levelHigh}/γ{$gamma}"
+             "  Mode: {$mode}" .
+             $blendingInfo
         );
 
         if (!confirm('Start processing?', default: true)) {
@@ -279,8 +293,17 @@ class FlambientProcessCommand extends Command
             note("✓ Found {$prepareResult->data['image_count']} images");
             $this->newLine();
 
-            // Step 2: Analyze
-            info('Step 2/7: Analyzing images');
+            // Steps 2-3: Skip for upload-only mode
+            if ($uploadOnly) {
+                // For upload-only, skip EXIF analysis and ImageMagick processing
+                // Jump directly to upload step
+                $blendedImages = glob("{$imageDirectory}/*.jpg");
+                $processResult = new ProcessingResult(true, 'Upload-only mode', [
+                    'blended_count' => count($blendedImages),
+                ]);
+            } else {
+                // Step 2: Analyze
+                info('Step 2/7: Analyzing images');
 
             $exifService = new ExifService(
                 strategy: $strategy,
@@ -358,9 +381,10 @@ class FlambientProcessCommand extends Command
                 message: 'Generating and executing ImageMagick scripts...'
             );
 
-            $duration = round(microtime(true) - $startTime, 2);
-            note("✓ Created {$processResult->data['blended_count']} blended images in {$duration}s");
-            $this->newLine();
+                $duration = round(microtime(true) - $startTime, 2);
+                note("✓ Created {$processResult->data['blended_count']} blended images in {$duration}s");
+                $this->newLine();
+            } // End of steps 2-3 (skipped for upload-only)
 
             // Cloud steps (skip if local-only)
             if ($processOnly) {
@@ -417,11 +441,15 @@ class FlambientProcessCommand extends Command
                 note("  View at: https://app.imagen-ai.com/projects/{$imagenProject->uuid}");
                 $this->newLine();
 
-                // Get list of blended images to upload
-                $blendedImages = File::glob("{$config->outputDirectory}/flambient/*.jpg");
-                $blendedImages = array_filter($blendedImages, fn($file) => !str_contains($file, '_tmp.jpg'));
+                // Get list of images to upload
+                if (!$uploadOnly) {
+                    // Full mode: upload blended images from output directory
+                    $blendedImages = File::glob("{$config->outputDirectory}/flambient/*.jpg");
+                    $blendedImages = array_filter($blendedImages, fn($file) => !str_contains($file, '_tmp.jpg'));
+                }
+                // else: upload-only mode already set $blendedImages from input directory
 
-                info("Uploading {$processResult->data['blended_count']} images to Imagen AI...");
+                info("Uploading " . count($blendedImages) . " images to Imagen AI...");
 
                 // Upload images with progress tracking
                 $uploadedCount = 0;
