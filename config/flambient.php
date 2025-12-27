@@ -8,10 +8,12 @@ return [
     */
     'imagen' => [
         'api_key' => env('IMAGEN_AI_API_KEY'),
-        'api_base_url' => env('IMAGEN_API_BASE_URL', 'https://api-beta.imagen-ai.com/v1'),
+        'base_url' => env('IMAGEN_API_BASE_URL', 'https://api-beta.imagen-ai.com/v1'),
         'profile_key' => env('IMAGEN_PROFILE_KEY', 309406),
         'timeout' => env('IMAGEN_TIMEOUT', 30),
         'retry_times' => env('IMAGEN_RETRY_TIMES', 3),
+        'poll_interval' => env('IMAGEN_POLL_INTERVAL', 30), // seconds
+        'poll_max_attempts' => env('IMAGEN_POLL_MAX_ATTEMPTS', 240), // 2 hours at 30s intervals
     ],
 
     /*
