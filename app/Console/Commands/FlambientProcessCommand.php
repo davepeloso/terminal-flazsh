@@ -58,25 +58,7 @@ class FlambientProcessCommand extends Command
             }
         );
 
-        $imageDirectory = $this->option('dir') ?: text(
-            label: 'Image directory',
-            placeholder: '/path/to/images',
-            required: true,
-            validate: function($value) {
-                if (!is_dir($value)) {
-                    return "Directory does not exist: {$value}";
-                }
-
-                $jpgCount = count(glob("{$value}/*.jpg")) + count(glob("{$value}/*.JPG"));
-                if ($jpgCount === 0) {
-                    return "No JPG files found in directory";
-                }
-
-                return null;
-            },
-            hint: 'Directory containing your ambient and flash images'
-        );
-
+        // Get workflow mode first (needed to determine directory selection method)
         $workflowMode = $this->option('local') ? 'local' : (select(
             label: 'Processing mode',
             options: [
@@ -91,13 +73,37 @@ class FlambientProcessCommand extends Command
         $processOnly = $workflowMode === 'local';
         $uploadOnly = $workflowMode === 'upload';
 
+        // Get image directory (with special handling for upload-only mode)
+        if ($uploadOnly) {
+            $imageDirectory = $this->selectPreviousWorkflowOrCustom();
+        } else {
+            $imageDirectory = $this->option('dir') ?: text(
+                label: 'Image directory',
+                placeholder: '/path/to/images',
+                required: true,
+                validate: function($value) {
+                    if (!is_dir($value)) {
+                        return "Directory does not exist: {$value}";
+                    }
+
+                    $jpgCount = count(glob("{$value}/*.jpg")) + count(glob("{$value}/*.JPG"));
+                    if ($jpgCount === 0) {
+                        return "No JPG files found in directory";
+                    }
+
+                    return null;
+                },
+                hint: 'Directory containing your ambient and flash images'
+            );
+        }
+
         // ═══════════════════════════════════════════════════════
         // 1.5. IMAGE CLASSIFICATION STRATEGY (skip for upload-only)
         // ═══════════════════════════════════════════════════════
 
         if ($uploadOnly) {
             // Skip classification setup for upload-only mode
-            $strategy = ImageClassificationStrategy::FLASH;
+            $strategy = ImageClassificationStrategy::Flash;
             $ambientValue = '16';
         } else {
             $this->newLine();
@@ -749,5 +755,79 @@ class FlambientProcessCommand extends Command
     private function formatCount(int $count): string
     {
         return (string)$count;
+    }
+
+    /**
+     * Select from previous workflow outputs or enter custom directory.
+     * Used in upload-only mode to make it easy to select previously processed images.
+     */
+    private function selectPreviousWorkflowOrCustom(): string
+    {
+        $this->newLine();
+        info('Select Images to Upload');
+
+        // Scan for previous workflows
+        $flambientStoragePath = storage_path('flambient');
+        $previousProjects = [];
+
+        if (is_dir($flambientStoragePath)) {
+            $projectDirs = glob($flambientStoragePath . '/*', GLOB_ONLYDIR);
+
+            foreach ($projectDirs as $projectDir) {
+                $flambientDir = $projectDir . '/flambient';
+                if (is_dir($flambientDir)) {
+                    $images = glob($flambientDir . '/*.jpg');
+                    $imageCount = count($images);
+
+                    if ($imageCount > 0) {
+                        $projectName = basename($projectDir);
+                        $modified = File::lastModified($flambientDir);
+                        $date = date('Y-m-d H:i', $modified);
+
+                        $previousProjects[$flambientDir] = "{$projectName} ({$imageCount} images, {$date})";
+                    }
+                }
+            }
+        }
+
+        // If we found previous projects, offer to select from them
+        if (!empty($previousProjects)) {
+            $choice = select(
+                label: 'Select source for upload',
+                options: array_merge(
+                    ['custom' => '📁 Enter custom directory path'],
+                    ['divider' => '──── Previous Workflows ────'],
+                    $previousProjects
+                ),
+                hint: 'Select from previous workflows or enter a custom path'
+            );
+
+            if ($choice === 'custom' || $choice === 'divider') {
+                // Fall through to custom path entry
+            } else {
+                note("✓ Selected: {$previousProjects[$choice]}");
+                return $choice;
+            }
+        }
+
+        // Custom path entry
+        return text(
+            label: 'Image directory',
+            placeholder: storage_path('flambient/project-name/flambient'),
+            required: true,
+            validate: function($value) {
+                if (!is_dir($value)) {
+                    return "Directory does not exist: {$value}";
+                }
+
+                $jpgCount = count(glob("{$value}/*.jpg")) + count(glob("{$value}/*.JPG"));
+                if ($jpgCount === 0) {
+                    return "No JPG files found in directory";
+                }
+
+                return null;
+            },
+            hint: 'Path to directory containing processed images to upload'
+        );
     }
 }
