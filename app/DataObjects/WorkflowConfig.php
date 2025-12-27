@@ -5,6 +5,7 @@ namespace App\DataObjects;
 readonly class WorkflowConfig
 {
     public function __construct(
+        public string $projectName,
         public string $imageDirectory,
         public string $outputDirectory,
         public bool $processOnly,
@@ -19,6 +20,7 @@ readonly class WorkflowConfig
     public static function fromArray(array $data): self
     {
         return new self(
+            projectName: $data['project_name'],
             imageDirectory: $data['image_directory'],
             outputDirectory: $data['output_directory'],
             processOnly: $data['process_only'] ?? false,
@@ -34,6 +36,7 @@ readonly class WorkflowConfig
     public function toArray(): array
     {
         return [
+            'project_name' => $this->projectName,
             'image_directory' => $this->imageDirectory,
             'output_directory' => $this->outputDirectory,
             'process_only' => $this->processOnly,

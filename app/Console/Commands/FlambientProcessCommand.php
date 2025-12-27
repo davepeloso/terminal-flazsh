@@ -202,6 +202,7 @@ class FlambientProcessCommand extends Command
 
         // Create configuration
         $config = new WorkflowConfig(
+            projectName: $projectName,
             imageDirectory: $imageDirectory,
             outputDirectory: $outputDirectory,
             processOnly: $processOnly,

@@ -38,8 +38,13 @@ class ImageMagickServiceTest extends TestCase
             projectName: 'test-project',
             imageDirectory: '/fake/input',
             outputDirectory: $this->tempDir,
-            imagenProjectUuid: null,
-            processOnly: true
+            processOnly: true,
+            apiKey: null,
+            profileKey: 309406,
+            levelLow: '40%',
+            levelHigh: '140%',
+            gamma: '1.0',
+            outputPrefix: 'flambient',
         );
 
         $groups = $this->getSampleGroups();
@@ -69,8 +74,13 @@ class ImageMagickServiceTest extends TestCase
             projectName: 'test-project',
             imageDirectory: '/fake/input',
             outputDirectory: $this->tempDir,
-            imagenProjectUuid: null,
-            processOnly: true
+            processOnly: true,
+            apiKey: null,
+            profileKey: 309406,
+            levelLow: '40%',
+            levelHigh: '140%',
+            gamma: '1.0',
+            outputPrefix: 'flambient',
         );
 
         $groups = $this->getSampleGroups()->take(1);
@@ -94,8 +104,13 @@ class ImageMagickServiceTest extends TestCase
             projectName: 'test-project',
             imageDirectory: '/fake/input',
             outputDirectory: $this->tempDir,
-            imagenProjectUuid: null,
-            processOnly: true
+            processOnly: true,
+            apiKey: null,
+            profileKey: 309406,
+            levelLow: '40%',
+            levelHigh: '140%',
+            gamma: '1.0',
+            outputPrefix: 'flambient',
         );
 
         $groups = $this->getSampleGroups()->take(1);
@@ -160,8 +175,13 @@ class ImageMagickServiceTest extends TestCase
             projectName: 'test-project',
             imageDirectory: '/fake/input',
             outputDirectory: $this->tempDir,
-            imagenProjectUuid: null,
-            processOnly: true
+            processOnly: true,
+            apiKey: null,
+            profileKey: 309406,
+            levelLow: '40%',
+            levelHigh: '140%',
+            gamma: '1.0',
+            outputPrefix: 'flambient',
         );
 
         $groups = $this->getSampleGroups()->take(1);
@@ -181,8 +201,13 @@ class ImageMagickServiceTest extends TestCase
             projectName: 'test-project',
             imageDirectory: '/fake/input',
             outputDirectory: $this->tempDir,
-            imagenProjectUuid: null,
-            processOnly: true
+            processOnly: true,
+            apiKey: null,
+            profileKey: 309406,
+            levelLow: '40%',
+            levelHigh: '140%',
+            gamma: '1.0',
+            outputPrefix: 'flambient',
         );
 
         $groups = $this->getSampleGroups();
