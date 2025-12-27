@@ -91,20 +91,35 @@ class FlambientProcessCommand extends Command
 
         // Show sample EXIF values to help user decide
         if (confirm('Show sample EXIF values from your images?', default: true)) {
+            $sampleCount = (int)select(
+                label: 'How many sample images to display?',
+                options: [
+                    '3' => '3 samples',
+                    '5' => '5 samples',
+                    '10' => '10 samples',
+                    '25' => '25 samples',
+                    '50' => '50 samples',
+                    '75' => '75 samples',
+                    '100' => '100 samples',
+                ],
+                default: '3',
+                hint: 'More samples help identify patterns in your EXIF data'
+            );
+
             $tempExif = new ExifService();
-            $samples = $tempExif->getSampleExifValues($imageDirectory, 3);
+            $samples = $tempExif->getSampleExifValues($imageDirectory, $sampleCount);
 
             $this->newLine();
             $this->table(
-                ['Filename', 'Flash#', 'ExpProgram', 'ExpMode', 'WB', 'ISO', 'Shutter'],
+                ['Filename', 'Flash', 'ExposureProgram', 'ExposureMode', 'WhiteBalance', 'ISO', 'Shutter'],
                 array_map(fn($s) => [
                     $s['filename'],
-                    $s['flash'],
-                    $s['exposure_program'],
-                    $s['exposure_mode'],
-                    $s['white_balance'],
-                    $s['iso'],
-                    $s['shutter_speed'],
+                    $this->formatExifValue($s['flash']),
+                    $this->formatExifValue($s['exposure_program']),
+                    $this->formatExifValue($s['exposure_mode']),
+                    $this->formatExifValue($s['white_balance']),
+                    $this->formatExifValue($s['iso']),
+                    $s['shutter_speed'], // Shutter speed is not an enum, keep as-is
                 ], $samples)
             );
             $this->newLine();
@@ -128,7 +143,7 @@ class FlambientProcessCommand extends Command
             label: "What {$strategy->label()} value indicates an AMBIENT image?",
             default: (string)$strategy->commonAmbientValue(),
             required: true,
-            hint: 'Images with this exact value will be classified as Ambient'
+            hint: $strategy->helpText()
         );
 
         note("Classification: {$strategy->label()} = '{$ambientValue}' → Ambient, others → Flash");
@@ -455,5 +470,24 @@ class FlambientProcessCommand extends Command
 
             return self::FAILURE;
         }
+    }
+
+    /**
+     * Format EXIF value to show both raw numeric and human-readable label.
+     * Example: "1 (Manual)" or just "100" for non-enum values.
+     */
+    private function formatExifValue(mixed $value): string
+    {
+        if (is_array($value) && isset($value['raw'], $value['label'])) {
+            // If raw and label are identical (numeric-only field), just show raw
+            if ($value['raw'] == $value['label']) {
+                return (string)$value['raw'];
+            }
+            // Otherwise show "raw (label)"
+            return "{$value['raw']} ({$value['label']})";
+        }
+
+        // Fallback for non-dual-extraction values
+        return (string)$value;
     }
 }

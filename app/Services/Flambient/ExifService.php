@@ -17,10 +17,12 @@ class ExifService
 
     /**
      * Extract EXIF metadata from all JPG images in a directory.
+     * Uses dual extraction: numeric (-n) for logic, pretty for UI labels.
      */
     public function extractMetadata(string $directory): Collection
     {
-        $result = Process::run(
+        // Extract numeric values for classification logic
+        $numericResult = Process::run(
             "exiftool -n -q -csv -ext jpg -ext JPG " .
             "-Filename -DateTimeOriginal -MeteringMode -ShutterSpeed -ApertureValue " .
             "-ISO -Flash -WhiteBalance -ExposureProgram -ExposureMode -FNumber " .
@@ -28,49 +30,92 @@ class ExifService
             "\"{$directory}\""
         );
 
-        if (!$result->successful()) {
-            throw new \RuntimeException("exiftool failed: " . $result->errorOutput());
+        if (!$numericResult->successful()) {
+            throw new \RuntimeException("exiftool numeric extraction failed: " . $numericResult->errorOutput());
         }
 
-        return $this->parseExifCsv($result->output());
+        // Extract human-readable labels for display
+        $prettyResult = Process::run(
+            "exiftool -q -csv -ext jpg -ext JPG " .
+            "-Filename -DateTimeOriginal -MeteringMode -ShutterSpeed -ApertureValue " .
+            "-ISO -Flash -WhiteBalance -ExposureProgram -ExposureMode -FNumber " .
+            ($this->customField ? "-{$this->customField} " : "") .
+            "\"{$directory}\""
+        );
+
+        if (!$prettyResult->successful()) {
+            throw new \RuntimeException("exiftool pretty extraction failed: " . $prettyResult->errorOutput());
+        }
+
+        return $this->parseExifCsv($numericResult->output(), $prettyResult->output());
     }
 
     /**
-     * Parse exiftool CSV output.
+     * Parse exiftool CSV output - both numeric and pretty versions.
+     * Merges numeric (for logic) with human-readable labels (for display).
      */
-    private function parseExifCsv(string $csv): Collection
+    private function parseExifCsv(string $numericCsv, string $prettyCsv): Collection
     {
-        $lines = explode("\n", trim($csv));
-        if (count($lines) < 2) {
+        // Parse numeric CSV
+        $numericLines = explode("\n", trim($numericCsv));
+        if (count($numericLines) < 2) {
             return collect([]);
         }
+        $numericHeaders = str_getcsv(array_shift($numericLines));
 
-        $headers = str_getcsv(array_shift($lines));
+        // Parse pretty CSV
+        $prettyLines = explode("\n", trim($prettyCsv));
+        if (count($prettyLines) < 2) {
+            return collect([]);
+        }
+        $prettyHeaders = str_getcsv(array_shift($prettyLines));
+
         $data = [];
 
-        foreach ($lines as $line) {
-            if (empty(trim($line))) {
+        // Process each image (assumes both CSVs have same rows in same order)
+        foreach ($numericLines as $index => $numericLine) {
+            if (empty(trim($numericLine))) {
                 continue;
             }
 
-            $values = str_getcsv($line);
-            $row = array_combine($headers, $values);
+            $numericValues = str_getcsv($numericLine);
+            $numericRow = array_combine($numericHeaders, $numericValues);
 
+            // Get corresponding pretty line
+            $prettyValues = isset($prettyLines[$index]) ? str_getcsv($prettyLines[$index]) : [];
+            $prettyRow = !empty($prettyValues) ? array_combine($prettyHeaders, $prettyValues) : [];
+
+            // Build merged data structure with both raw and label
             $data[] = [
-                'source_file' => $row['SourceFile'] ?? '',
-                'filename' => basename($row['SourceFile'] ?? ''),
-                'datetime_original' => $row['DateTimeOriginal'] ?? '',
-                'metering_mode' => $row['MeteringMode'] ?? '',
-                'shutter_speed' => $row['ShutterSpeed'] ?? '',
-                'aperture' => $row['ApertureValue'] ?? '',
-                'f_number' => $row['FNumber'] ?? '',
-                'iso' => (int)($row['ISO'] ?? 0),
-                'flash' => (int)($row['Flash'] ?? 16),
-                'white_balance' => (int)($row['WhiteBalance'] ?? 0),
-                'exposure_program' => (int)($row['ExposureProgram'] ?? 0),
-                'exposure_mode' => (int)($row['ExposureMode'] ?? 0),
-                'custom_field' => $this->customField ? ($row[$this->customField] ?? '') : '',
-                'type' => $this->classifyImageType($row),
+                'source_file' => $numericRow['SourceFile'] ?? '',
+                'filename' => basename($numericRow['SourceFile'] ?? ''),
+                'datetime_original' => $numericRow['DateTimeOriginal'] ?? '',
+                'metering_mode' => $numericRow['MeteringMode'] ?? '',
+                'shutter_speed' => $numericRow['ShutterSpeed'] ?? '',
+                'aperture' => $numericRow['ApertureValue'] ?? '',
+                'f_number' => $numericRow['FNumber'] ?? '',
+                'iso' => [
+                    'raw' => (int)($numericRow['ISO'] ?? 0),
+                    'label' => $prettyRow['ISO'] ?? (string)($numericRow['ISO'] ?? 0),
+                ],
+                'flash' => [
+                    'raw' => (int)($numericRow['Flash'] ?? 16),
+                    'label' => $prettyRow['Flash'] ?? (string)($numericRow['Flash'] ?? 16),
+                ],
+                'white_balance' => [
+                    'raw' => (int)($numericRow['WhiteBalance'] ?? 0),
+                    'label' => $prettyRow['WhiteBalance'] ?? (string)($numericRow['WhiteBalance'] ?? 0),
+                ],
+                'exposure_program' => [
+                    'raw' => (int)($numericRow['ExposureProgram'] ?? 0),
+                    'label' => $prettyRow['ExposureProgram'] ?? (string)($numericRow['ExposureProgram'] ?? 0),
+                ],
+                'exposure_mode' => [
+                    'raw' => (int)($numericRow['ExposureMode'] ?? 0),
+                    'label' => $prettyRow['ExposureMode'] ?? (string)($numericRow['ExposureMode'] ?? 0),
+                ],
+                'custom_field' => $this->customField ? ($numericRow[$this->customField] ?? '') : '',
+                'type' => $this->classifyImageType($numericRow),
             ];
         }
 
@@ -178,6 +223,7 @@ class ExifService
 
     /**
      * Display sample EXIF values to help user choose classification strategy.
+     * Returns both raw numeric values and human-readable labels.
      */
     public function getSampleExifValues(string $directory, int $sampleSize = 5): array
     {
