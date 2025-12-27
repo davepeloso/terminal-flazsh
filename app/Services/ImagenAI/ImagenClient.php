@@ -35,7 +35,13 @@ class ImagenClient
         $this->http = Http::withHeaders([
             'x-api-key' => $this->apiKey,
             'Content-Type' => 'application/json',
-        ])->timeout(config('flambient.imagen.timeout', 30));
+        ])
+        ->timeout(config('flambient.imagen.timeout', 30))
+        ->retry(
+            times: config('flambient.imagen.retry_times', 3),
+            sleepMilliseconds: 1000,
+            when: fn($exception) => $exception instanceof \Illuminate\Http\Client\ConnectionException
+        );
     }
 
     /**
