@@ -13,6 +13,7 @@ use App\Services\ImagenAI\ImagenClient;
 use App\Services\ImagenAI\ImagenEditOptions;
 use App\Services\ImagenAI\ImagenException;
 use App\Services\ImagenAI\ImagenPhotographyType;
+use App\Services\ImagenAI\ImagenProject;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
