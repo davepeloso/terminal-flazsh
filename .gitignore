@@ -21,3 +21,8 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+public/123-main-street/*.jpg
+public/123-main-street/*.jpeg
+storage/flambient/
+**/.DS_Store
