@@ -9,7 +9,12 @@ use App\Enums\WorkflowStatus;
 use App\Models\WorkflowRun;
 use App\Services\Flambient\ExifService;
 use App\Services\Flambient\ImageMagickService;
+use App\Services\ImagenAI\ImagenClient;
+use App\Services\ImagenAI\ImagenEditOptions;
+use App\Services\ImagenAI\ImagenException;
+use App\Services\ImagenAI\ImagenPhotographyType;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 use function Laravel\Prompts\confirm;
@@ -357,7 +362,7 @@ class FlambientProcessCommand extends Command
 
             // Cloud steps (skip if local-only)
             if ($processOnly) {
-                info('Step 4-6: Skipped (local-only mode)');
+                info('Steps 4-8: Skipped (local-only mode - Imagen AI processing disabled)');
 
                 // Clean up any _tmp files (darkened exports)
                 $tmpFiles = glob("{$config->outputDirectory}/flambient/*_tmp.jpg");
@@ -383,56 +388,200 @@ class FlambientProcessCommand extends Command
                 return self::SUCCESS;
             }
 
-            // Step 4: Upload (simulated)
-            info('Step 4/7: Uploading to Imagen AI');
-            warning("This will upload {$processResult->data['blended_count']} images to Imagen AI for processing.");
+            // ═══════════════════════════════════════════════════════
+            // 4. UPLOAD TO IMAGEN AI
+            // ═══════════════════════════════════════════════════════
 
-            if (!confirm('Proceed with upload?', default: true)) {
+            $this->newLine();
+            info('Step 4/8: Upload to Imagen AI');
+            warning("This will upload {$processResult->data['blended_count']} blended images to Imagen AI for enhancement.");
+
+            if (!confirm('Proceed with Imagen AI upload and processing?', default: true)) {
                 $run->update(['status' => WorkflowStatus::Paused->value]);
                 info('Workflow paused. Resume later with: php artisan flambient:resume ' . $run->id);
                 return self::SUCCESS;
             }
 
-            spin(
-                callback: fn() => sleep(2),
-                message: 'Uploading images...'
-            );
+            try {
+                $imagenClient = new ImagenClient();
 
-            $projectUuid = Str::uuid();
-            note("✓ Uploaded to project: {$projectUuid}");
+                // Create Imagen project
+                $imagenProject = spin(
+                    callback: fn() => $imagenClient->createProject($config->projectName),
+                    message: 'Creating Imagen AI project...'
+                );
+
+                note("✓ Project created: {$imagenProject->uuid}");
+                note("  View at: https://app.imagen-ai.com/projects/{$imagenProject->uuid}");
+                $this->newLine();
+
+                // Get list of blended images to upload
+                $blendedImages = File::glob("{$config->outputDirectory}/flambient/*.jpg");
+                $blendedImages = array_filter($blendedImages, fn($file) => !str_contains($file, '_tmp.jpg'));
+
+                info("Uploading {$processResult->data['blended_count']} images to Imagen AI...");
+
+                // Upload images with progress tracking
+                $uploadedCount = 0;
+                $uploadResult = $imagenClient->uploadImages(
+                    projectUuid: $imagenProject->uuid,
+                    filePaths: $blendedImages,
+                    progressCallback: function ($current, $total, $filename) use (&$uploadedCount) {
+                        $uploadedCount = $current;
+                        if ($current % 5 === 0 || $current === $total) {
+                            $this->components->info("  Uploaded {$current}/{$total}: " . basename($filename));
+                        }
+                    }
+                );
+
+                if (!$uploadResult->isFullySuccessful()) {
+                    $failedCount = count($uploadResult->failed);
+                    warning("⚠ {$failedCount} files failed to upload: " . implode(', ', array_slice($uploadResult->failed, 0, 3)));
+                }
+
+                note("✓ Upload complete: {$uploadedCount}/{$uploadResult->totalFiles} files ({$uploadResult->getSuccessRate()}% success)");
+                $this->newLine();
+
+                // ═══════════════════════════════════════════════════════
+                // 5. START IMAGEN AI EDITING
+                // ═══════════════════════════════════════════════════════
+
+                info('Step 5/8: Starting Imagen AI editing');
+
+                // Get edit options
+                $editOptions = new ImagenEditOptions(
+                    crop: false,
+                    windowPull: true,
+                    perspectiveCorrection: false,
+                    hdrMerge: false,
+                    photographyType: ImagenPhotographyType::REAL_ESTATE
+                );
+
+                spin(
+                    callback: fn() => $imagenClient->startEditing(
+                        projectUuid: $imagenProject->uuid,
+                        profileKey: config('flambient.imagen.profile_key'),
+                        options: $editOptions
+                    ),
+                    message: 'Submitting to Imagen AI for enhancement...'
+                );
+
+                note("✓ Project submitted for AI editing");
+                $this->newLine();
+
+                // ═══════════════════════════════════════════════════════
+                // 6. MONITOR PROCESSING
+                // ═══════════════════════════════════════════════════════
+
+                info('Step 6/8: Monitoring AI processing');
+                note('This typically takes 10-30 minutes depending on image count.');
+                note('Progress updates will appear below. You can safely cancel (Ctrl+C) and resume later.');
+                $this->newLine();
+
+                $lastProgress = -1;
+                $editStatus = $imagenClient->pollEditStatus(
+                    projectUuid: $imagenProject->uuid,
+                    maxAttempts: config('flambient.imagen.poll_max_attempts', 240),
+                    intervalSeconds: config('flambient.imagen.poll_interval', 30),
+                    progressCallback: function ($status) use (&$lastProgress) {
+                        if ($status->progress !== $lastProgress) {
+                            $emoji = match(true) {
+                                $status->progress === 100 => '🎉',
+                                $status->progress >= 75 => '🚀',
+                                $status->progress >= 50 => '⚡',
+                                $status->progress >= 25 => '🔄',
+                                default => '⏳'
+                            };
+
+                            $this->components->info("{$emoji} Processing: {$status->progress}% - {$status->status}");
+                            $lastProgress = $status->progress;
+                        }
+                    }
+                );
+
+                note("✓ AI editing complete!");
+                $this->newLine();
+
+                // ═══════════════════════════════════════════════════════
+                // 7. EXPORT TO JPEG
+                // ═══════════════════════════════════════════════════════
+
+                info('Step 7/8: Exporting to JPEG format');
+
+                spin(
+                    callback: function () use ($imagenClient, $imagenProject) {
+                        $imagenClient->exportProject($imagenProject->uuid);
+                        sleep(10); // Give export time to initialize
+                    },
+                    message: 'Initiating JPEG export...'
+                );
+
+                note("✓ Export initiated");
+                $this->newLine();
+
+                // ═══════════════════════════════════════════════════════
+                // 8. DOWNLOAD RESULTS
+                // ═══════════════════════════════════════════════════════
+
+                info('Step 8/8: Downloading enhanced images');
+
+                // Get export download links
+                $exportLinks = spin(
+                    callback: fn() => $imagenClient->getExportLinks($imagenProject->uuid),
+                    message: 'Retrieving download links...'
+                );
+
+                note("✓ Found {$exportLinks->count()} files ready for download");
+
+                // Create output directory for edited images
+                $editedOutputDir = "{$config->outputDirectory}/edited";
+                File::ensureDirectoryExists($editedOutputDir);
+
+                // Download files with progress
+                $downloadedCount = 0;
+                $downloadResult = $imagenClient->downloadFiles(
+                    downloadLinks: $exportLinks,
+                    outputDirectory: $editedOutputDir,
+                    progressCallback: function ($current, $total, $filename) use (&$downloadedCount) {
+                        $downloadedCount = $current;
+                        if ($current % 5 === 0 || $current === $total) {
+                            $this->components->info("  Downloaded {$current}/{$total}: " . basename($filename));
+                        }
+                    }
+                );
+
+                if (!$downloadResult->isFullySuccessful()) {
+                    $failedCount = count($downloadResult->failed);
+                    warning("⚠ {$failedCount} files failed to download");
+                }
+
+                note("✓ Download complete: {$downloadedCount}/{$downloadResult->totalFiles} files ({$downloadResult->getSuccessRate()}% success)");
+                note("  Output: {$editedOutputDir}/");
+                $this->newLine();
+
+                // Update workflow run with Imagen project UUID
+                $run->update(['imagen_project_uuid' => $imagenProject->uuid]);
+
+            } catch (ImagenException $e) {
+                $this->error("Imagen AI error: {$e->getMessage()}");
+                $run->update([
+                    'status' => WorkflowStatus::Failed->value,
+                    'failed_at' => now(),
+                    'error_message' => "Imagen AI failed: {$e->getMessage()}",
+                ]);
+                return self::FAILURE;
+            }
+
+            // ═══════════════════════════════════════════════════════
+            // 9. FINALIZE
+            // ═══════════════════════════════════════════════════════
+
             $this->newLine();
-
-            // Step 5: Monitor (simulated)
-            info('Step 5/7: Monitoring cloud processing');
-            note('This typically takes 10-30 minutes. You can safely cancel and resume later.');
-
-            spin(
-                callback: fn() => sleep(3),
-                message: 'Waiting for cloud processing (simulated)...'
-            );
-            note("✓ Processing completed");
-            $this->newLine();
-
-            // Step 6: Download (simulated)
-            info('Step 6/7: Downloading results');
-            spin(
-                callback: fn() => sleep(2),
-                message: 'Downloading enhanced images...'
-            );
-            note("✓ Downloaded {$processResult->data['blended_count']} images");
-            $this->newLine();
-
-            // Step 7: Finalize
-            info('Step 7/7: Finalizing');
-            spin(
-                callback: fn() => sleep(1),
-                message: 'Cleaning up and generating summary...'
-            );
+            info('Finalizing workflow');
 
             $run->update([
                 'status' => WorkflowStatus::Completed->value,
                 'completed_at' => now(),
-                'imagen_project_uuid' => $projectUuid,
                 'total_images_processed' => $prepareResult->data['image_count'],
                 'total_groups_created' => $analyzeResult->data['group_count'],
             ]);
@@ -449,13 +598,19 @@ class FlambientProcessCommand extends Command
                     ['Total Duration', $run->started_at->diffForHumans($run->completed_at, true)],
                     ['Images Processed', $run->total_images_processed],
                     ['Groups Created', $run->total_groups_created],
-                    ['Output Directory', $config->outputDirectory],
+                    ['Blended Output', "{$config->outputDirectory}/flambient/"],
+                    ['Enhanced Output', "{$editedOutputDir}/"],
+                    ['Imagen Project', $run->imagen_project_uuid ?? 'N/A'],
                 ]
             );
 
             $this->newLine();
-            info("View results: ls {$config->outputDirectory}/flambient");
-            info("View database: php artisan tinker -> WorkflowRun::find('{$run->id}')");
+            info("🎨 Blended images: {$config->outputDirectory}/flambient/");
+            info("✨ Enhanced images: {$editedOutputDir}/");
+            if ($run->imagen_project_uuid) {
+                info("🌐 Imagen project: https://app.imagen-ai.com/projects/{$run->imagen_project_uuid}");
+            }
+            info("💾 Database: php artisan tinker -> WorkflowRun::find('{$run->id}')");
 
             return self::SUCCESS;
 

@@ -9,6 +9,7 @@ enum StepName: string
     case Process = 'process';
     case Upload = 'upload';
     case Monitor = 'monitor';
+    case Export = 'export';
     case Download = 'download';
     case Finalize = 'finalize';
 
@@ -23,6 +24,7 @@ enum StepName: string
             self::Process,
             self::Upload,
             self::Monitor,
+            self::Export,
             self::Download,
             self::Finalize,
         ];
@@ -33,7 +35,7 @@ enum StepName: string
      */
     public function requiresCloud(): bool
     {
-        return in_array($this, [self::Upload, self::Monitor, self::Download]);
+        return in_array($this, [self::Upload, self::Monitor, self::Export, self::Download]);
     }
 
     /**
