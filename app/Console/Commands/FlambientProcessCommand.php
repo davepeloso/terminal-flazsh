@@ -448,6 +448,10 @@ class FlambientProcessCommand extends Command
 
                 info('Step 5/8: Starting Imagen AI editing');
 
+                // Select editing profile
+                $profileKey = $this->selectImagenProfile();
+                $this->newLine();
+
                 // Get edit options
                 $editOptions = new ImagenEditOptions(
                     crop: false,
@@ -460,13 +464,13 @@ class FlambientProcessCommand extends Command
                 spin(
                     callback: fn() => $imagenClient->startEditing(
                         projectUuid: $imagenProject->uuid,
-                        profileKey: config('flambient.imagen.profile_key'),
+                        profileKey: $profileKey,
                         options: $editOptions
                     ),
                     message: 'Submitting to Imagen AI for enhancement...'
                 );
 
-                note("✓ Project submitted for AI editing");
+                note("✓ Project submitted for AI editing (Profile: {$profileKey})");
                 $this->newLine();
 
                 // ═══════════════════════════════════════════════════════
@@ -644,5 +648,76 @@ class FlambientProcessCommand extends Command
 
         // Fallback for non-dual-extraction values
         return (string)$value;
+    }
+
+    /**
+     * Prompt user to select an Imagen AI editing profile.
+     * Offers quick selection from favorites or browse all profiles.
+     */
+    private function selectImagenProfile(): string
+    {
+        $favorites = config('imagen-profiles.favorites', []);
+        $allProfiles = config('imagen-profiles.all', []);
+        $default = config('imagen-profiles.default');
+
+        // If no favorites configured, just use default
+        if (empty($favorites)) {
+            return (string)$default;
+        }
+
+        $this->newLine();
+        info('Select Imagen AI Editing Profile');
+        note('Profiles determine the AI editing style applied to your images');
+
+        // Ask if they want to select or use default
+        $choice = select(
+            label: 'How would you like to choose a profile?',
+            options: [
+                'favorites' => "⭐ Quick Select ({$this->formatCount(count($favorites))} favorites)",
+                'all' => "📋 Browse All Profiles ({$this->formatCount(count($allProfiles))} available)",
+                'default' => "✓ Use Default ({$default})",
+            ],
+            default: 'favorites',
+            hint: 'Favorites are your most-used profiles for quick access'
+        );
+
+        // Use default
+        if ($choice === 'default') {
+            note("Using default profile: {$default}");
+            return (string)$default;
+        }
+
+        // Select from favorites (quick select)
+        if ($choice === 'favorites') {
+            $selectedKey = select(
+                label: 'Choose from your favorite profiles',
+                options: $favorites,
+                hint: 'These are your 3 most-used profiles'
+            );
+
+            $profileName = $favorites[$selectedKey] ?? "Profile {$selectedKey}";
+            note("✓ Selected: {$profileName} (Profile: {$selectedKey})");
+            return (string)$selectedKey;
+        }
+
+        // Browse all profiles
+        $selectedKey = select(
+            label: 'Choose from all available profiles',
+            options: $allProfiles,
+            scroll: 10, // Show 10 at a time for easier scrolling
+            hint: 'Scroll through all available Imagen AI profiles'
+        );
+
+        $profileName = $allProfiles[$selectedKey] ?? "Profile {$selectedKey}";
+        note("✓ Selected: {$profileName} (Profile: {$selectedKey})");
+        return (string)$selectedKey;
+    }
+
+    /**
+     * Format count for display (e.g., "3" not "3 profiles").
+     */
+    private function formatCount(int $count): string
+    {
+        return (string)$count;
     }
 }
