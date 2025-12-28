@@ -147,21 +147,50 @@ class ImagenClient
             throw new ImagenException("File not found: {$localFilePath}");
         }
 
-        $fileContent = File::get($localFilePath);
+        try {
+            // Simple PUT request to S3 presigned URL (matches curl -T from shell script)
+            // S3 expects raw file content in the body, not multipart/form-data
+            $fileHandle = fopen($localFilePath, 'r');
+            if ($fileHandle === false) {
+                throw new ImagenException("Could not open file: {$localFilePath}");
+            }
 
-        // Direct PUT request to S3 presigned URL (no auth headers needed)
-        $response = Http::timeout(300) // 5 minute timeout for large files
-            ->withBody($fileContent, 'image/jpeg')
-            ->put($uploadLink->uploadUrl);
+            $response = Http::withoutVerifying()  // S3 presigned URLs may have cert issues
+                ->timeout(300)  // 5 minute timeout for large files
+                ->withBody(stream_get_contents($fileHandle), mime_content_type($localFilePath))
+                ->put($uploadLink->uploadUrl);
 
-        if (!$response->successful()) {
+            fclose($fileHandle);
+
+            if (!$response->successful()) {
+                $errorBody = $response->body();
+                Log::error("Upload failed for {$uploadLink->filename}", [
+                    'status' => $response->status(),
+                    'body' => $errorBody,
+                    'file_size' => filesize($localFilePath),
+                ]);
+
+                throw new ImagenException(
+                    "Failed to upload {$uploadLink->filename}: HTTP {$response->status()}",
+                    $response->status()
+                );
+            }
+
+            return true;
+        } catch (\Exception $e) {
+            if ($e instanceof ImagenException) {
+                throw $e;
+            }
+
+            Log::error("Exception during upload of {$uploadLink->filename}", [
+                'error' => $e->getMessage(),
+                'file' => $localFilePath,
+            ]);
+
             throw new ImagenException(
-                "Failed to upload {$uploadLink->filename}: {$response->body()}",
-                $response->status()
+                "Upload exception for {$uploadLink->filename}: {$e->getMessage()}"
             );
         }
-
-        return true;
     }
 
     /**
